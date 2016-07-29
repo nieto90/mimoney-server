@@ -4,7 +4,7 @@ from rest_framework.urlpatterns import format_suffix_patterns
 from . import views
 
 router = routers.DefaultRouter()
-# router.register(r'user', views.UserViewSet)
+router.register(r'user', views.UserViewSet)
 # router.register(r'provinces', views.ProvincesViewSet)
 # router.register(r'category', views.CategoryViewSet)
 # router.register(r'question', views.QuestionViewSet)
@@ -14,5 +14,6 @@ router = routers.DefaultRouter()
 
 urlpatterns = [
     url(r'^api/', include(router.urls)),
+    url(r'^api/home/', views.home, name='home')
 #    url(r'^$', views.index, name='index'),
 ]

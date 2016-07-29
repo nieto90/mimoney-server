@@ -42,3 +42,36 @@ class Movement(models.Model):
 		ordering = ['-date']
 		verbose_name = "Movimiento"
 		verbose_name_plural = "Movimientos"
+
+class RegularPayment(models.Model):
+	CONTRIB_CHOICES = (
+		('M', 'Me'),
+		('O', 'Other'),
+		('B', 'Both')
+	)
+	TYPE_CHOICES = (
+		('IN', 'Ingreso'),
+		('OUT', 'Pago')
+	)
+	FREQ_CHOICES = (
+		('M', 'Mensual'),
+		('B', 'Bimensual'),
+		('T', 'Trimestral'),
+		('A', 'Anual')
+	)
+	user = models.ForeignKey(User)
+	amount = models.DecimalField(max_digits=20, decimal_places=2, default=0.00)
+	concept = models.CharField(max_length=100, default='Concepto')
+	type = models.CharField(max_length=3, choices=TYPE_CHOICES, default='OUT')
+	contribution = models.CharField(max_length=1, choices=CONTRIB_CHOICES, default='M')
+	done = models.BooleanField(default=False)
+	frequency = models.CharField(max_length=1, choices=FREQ_CHOICES, default='M')
+	next_payment = models.DateField()
+
+	def __str__(self):
+		return str(self.concept) + ": " + str(self.amount) + " euros" + str(self.frequency)
+
+	class Meta:
+		ordering = ['-next_payment']
+		verbose_name = "Pago regular"
+		verbose_name_plural = "Pagos regulares"
