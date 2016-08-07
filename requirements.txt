@@ -1,2 +1,5 @@
 Django==1.9.7
+django-cors-headers==1.1.0
+django-smartfields==1.0.9
 djangorestframework==3.4.1
+Pillow==3.3.0
