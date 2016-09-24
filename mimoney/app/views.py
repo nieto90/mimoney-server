@@ -5,6 +5,7 @@ from rest_framework import viewsets
 from django.template.context_processors import csrf
 from django.contrib.auth import authenticate
 from rest_framework.decorators import list_route
+from django.db.models import Q
 from mimoney import settings
 import models, serializers
 import json
@@ -47,6 +48,18 @@ class AccountViewSet(viewsets.ReadOnlyModelViewSet):
 
 	@list_route(methods=['post'])
 	def getAccount(self,request):
-		user = request.data['user']
-		acc = models.Account.objects.get(user__id=user)
-		return Response({'account': serializers.AccountSerializer(acc).data})
+		try:
+			user = request.data['user']
+			acc = models.Account.objects.get(user__id=user)
+			return Response({'account': serializers.AccountSerializer(acc).data})
+		except Exception as e:
+			return  HttpResponseServerError(json.dumps({'title': 'Error al acceder a la cuenta de usuario', 'message': str(e.message)}), content_type="application/json")
+
+	@list_route(methods=['post'])
+	def getMovements(self,request):
+		try:
+			user = request.data['user']
+			mv = models.Movement.objects.filter(user__id=user).exclude(contribution='O') | models.Movement.objects.exclude(user__id=user).exclude(contribution='M')
+			return Response({'movements': serializers.MovementSerializer(mv, many=True).data})
+		except Exception as e:
+			return  HttpResponseServerError(json.dumps({'title': 'Error al acceder a la cuenta de usuario', 'message': str(e.message)}), content_type="application/json")

@@ -10,7 +10,7 @@ class CategoryAdmin(admin.ModelAdmin):
 	fields = ('name', 'icon')
 
 class MovementAdmin(admin.ModelAdmin):
-	fields = ('user', 'concept', 'amount', 'contribution', 'done')
+	fields = ('user', 'category', 'type', 'concept', 'amount', 'contribution', 'done')
 	readonly_fields = ('date',)
 
 class RegularPaymentAdmin(admin.ModelAdmin):
