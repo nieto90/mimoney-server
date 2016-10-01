@@ -34,6 +34,7 @@ class MovementSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Movement
         fields = (
+            'id',
             'category',
             'amount',
             'concept',

@@ -5,7 +5,8 @@ from rest_framework import viewsets
 from django.template.context_processors import csrf
 from django.contrib.auth import authenticate
 from rest_framework.decorators import list_route
-from django.db.models import Q
+from django.db.models import Q, Sum
+from django.db import transaction
 from mimoney import settings
 import models, serializers
 import json
@@ -47,11 +48,21 @@ class AccountViewSet(viewsets.ReadOnlyModelViewSet):
 	serializer_class = serializers.AccountSerializer
 
 	@list_route(methods=['post'])
-	def getAccount(self,request):
+	def getBalance(self,request):
 		try:
 			user = request.data['user']
-			acc = models.Account.objects.get(user__id=user)
-			return Response({'account': serializers.AccountSerializer(acc).data})
+			balance = dict()
+			mv = models.Movement.objects.filter(user__id=user, done=False).exclude(contribution='O') | models.Movement.objects.filter(done=False).exclude(user__id=user).exclude(contribution='M')
+			if mv.count() > 0:
+				balance['out'] = -mv.aggregate(out=Sum('amount'))['out']
+			else:
+				balance['out'] = 0
+			mv = models.Movement.objects.filter(user__id=user, done=False, contribution='O') | models.Movement.objects.filter(done=False, contribution='M').exclude(user__id=user)
+			if mv.count() > 0:
+				balance['in'] = mv.aggregate(inn=Sum('amount'))['inn']
+			else:
+				balance['in'] = 0
+			return Response({'balance': balance})
 		except Exception as e:
 			return  HttpResponseServerError(json.dumps({'title': 'Error al acceder a la cuenta de usuario', 'message': str(e.message)}), content_type="application/json")
 
@@ -63,3 +74,26 @@ class AccountViewSet(viewsets.ReadOnlyModelViewSet):
 			return Response({'movements': serializers.MovementSerializer(mv, many=True).data})
 		except Exception as e:
 			return  HttpResponseServerError(json.dumps({'title': 'Error al acceder a la cuenta de usuario', 'message': str(e.message)}), content_type="application/json")
+
+	@list_route(methods=['post'])
+	def completeMovement(self,request):
+		try:
+			movement = request.data['movement']
+			with transaction.atomic():
+				mv = models.Movement.objects.get(id=movement)
+				mv.done = True
+				mv.save()
+				return Response({'ok': True})
+		except Exception as e:
+			return  HttpResponseServerError(json.dumps({'title': 'Error al acceder a la cuenta de usuario', 'message': str(e.message)}), content_type="application/json")
+
+	@list_route(methods=['post'])
+	def liquidation(self,request):
+		try:
+			with transaction.atomic():
+				mv = models.Movement.objects.filter(done=False).update(done=True)
+				return Response({'ok': True})
+		except Exception as e:
+			return  HttpResponseServerError(json.dumps({'title': 'Error al acceder a la cuenta de usuario', 'message': str(e.message)}), content_type="application/json")
+
+
