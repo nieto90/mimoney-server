@@ -17,6 +17,7 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Category
         fields = (
+            'id',
             'name',
             'icon_mini'
         )

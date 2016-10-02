@@ -28,18 +28,21 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
 	@list_route(methods=['post'])
 	def login(self, request):
-		user = authenticate(username=request.data['user'], password=request.data['password'])
-		if user is not None:
-			# the password verified for the user
-			if user.is_active:
-				#print("User is valid, active and authenticated")
-				return Response({'user': serializers.UserSerializer(user).data})
+		try:
+			user = authenticate(username=request.data['user'], password=request.data['password'])
+			if user is not None:
+				# the password verified for the user
+				if user.is_active:
+					#print("User is valid, active and authenticated")
+					return Response({'user': serializers.UserSerializer(user).data})
+				else:
+					#print("The password is valid, but the account has been disabled!")
+					return  HttpResponseServerError(json.dumps({'title': "Cuenta deshabilitada", 'message': "Los datos son validos, pero tu cuenta no esta habilitada."}), content_type="application/json")
 			else:
-				#print("The password is valid, but the account has been disabled!")
-				return  HttpResponseServerError(json.dumps({'title': "Cuenta deshabilitada", 'message': "Los datos son validos, pero tu cuenta no esta habilitada."}), content_type="application/json")
-		else:
-			# the authentication system was unable to verify the username and password
-			#print("The username and password were incorrect.")
+				# the authentication system was unable to verify the username and password
+				#print("The username and password were incorrect.")
+				return  HttpResponseServerError(json.dumps({'title': "Login incorrecto", 'message': "El usuario o la contrasena introducidos son incorrectos."}), content_type="application/json")
+		except:
 			return  HttpResponseServerError(json.dumps({'title': "Login incorrecto", 'message': "El usuario o la contrasena introducidos son incorrectos."}), content_type="application/json")
 
 class AccountViewSet(viewsets.ReadOnlyModelViewSet):
@@ -88,6 +91,28 @@ class AccountViewSet(viewsets.ReadOnlyModelViewSet):
 			return  HttpResponseServerError(json.dumps({'title': 'Error al acceder a la cuenta de usuario', 'message': str(e.message)}), content_type="application/json")
 
 	@list_route(methods=['post'])
+	def saveMovement(self,request):
+		try:
+			concept = request.data['concept']
+			amount = request.data['amount']
+			category = request.data['category']
+			contribution = request.data['contribution']
+			user = request.data['user']
+
+			with transaction.atomic():
+				m = models.Movement()
+				m.user = models.User.objects.get(id=user)
+				m.concept = concept
+				m.amount = amount
+				m.contribution = contribution
+				m.category = models.Category.objects.get(id=category)
+				m.type = 'OUT'
+				m.save()
+			return Response({'opk':True})
+		except Exception as e:
+			return  HttpResponseServerError(json.dumps({'title': 'Error al acceder a la cuenta de usuario', 'message': str(e.message)}), content_type="application/json")
+
+	@list_route(methods=['post'])
 	def liquidation(self,request):
 		try:
 			with transaction.atomic():
@@ -96,4 +121,13 @@ class AccountViewSet(viewsets.ReadOnlyModelViewSet):
 		except Exception as e:
 			return  HttpResponseServerError(json.dumps({'title': 'Error al acceder a la cuenta de usuario', 'message': str(e.message)}), content_type="application/json")
 
+class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
+	permission_classes = []
+	queryset = models.Category.objects.all()
+	serializer_class = serializers.CategorySerializer
 
+	@list_route(methods=['post'])
+	def getCategories(self,request):
+		cs = models.Category.objects.all()
+		result = serializers.CategorySerializer(cs, many=True).data
+		return Response({'categories': result})

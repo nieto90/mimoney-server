@@ -8,6 +8,7 @@ from . import views
 router = routers.DefaultRouter()
 router.register(r'user', views.UserViewSet)
 router.register(r'account', views.AccountViewSet)
+router.register(r'category', views.CategoryViewSet)
 # router.register(r'provinces', views.ProvincesViewSet)
 # router.register(r'category', views.CategoryViewSet)
 # router.register(r'question', views.QuestionViewSet)
