@@ -70,13 +70,13 @@ class AccountViewSet(viewsets.ReadOnlyModelViewSet):
 			return  HttpResponseServerError(json.dumps({'title': 'Error al acceder a la cuenta de usuario', 'message': str(e.message)}), content_type="application/json")
 
 	@list_route(methods=['post'])
-	def getMovements(self,request):
+	def getAllMovements(self,request):
 		try:
 			user = request.data['user']
-			mv = models.Movement.objects.filter(user__id=user).exclude(contribution='O') | models.Movement.objects.exclude(user__id=user).exclude(contribution='M')
-			return Response({'movements': serializers.MovementSerializer(mv, many=True).data})
+			mv = models.Movement.objects.all().order_by('-id')
+			return Response({'movements': serializers.MovementSerializer(mv, many=True, context={'user': user}).data})
 		except Exception as e:
-			return  HttpResponseServerError(json.dumps({'title': 'Error al acceder a la cuenta de usuario', 'message': str(e.message)}), content_type="application/json")
+			return  HttpResponseServerError(json.dumps({'title': 'Error al obtener los movimientos', 'message': str(e.message)}), content_type="application/json")
 
 	@list_route(methods=['post'])
 	def completeMovement(self,request):

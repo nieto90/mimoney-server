@@ -31,6 +31,14 @@ class AccountSerializer(serializers.ModelSerializer):
         )
 
 class MovementSerializer(serializers.ModelSerializer):
+    def getAmount(self,obj):
+        u = self.context.get('user')
+        if (obj.user.id == u and obj.contribution == 'M') or (obj.user.id != u and obj.contribution != 'M'):
+            return -obj.amount
+        return obj.amount
+
+    amount = serializers.SerializerMethodField('getAmount')
+
     category = CategorySerializer()
     class Meta:
         model = models.Movement
